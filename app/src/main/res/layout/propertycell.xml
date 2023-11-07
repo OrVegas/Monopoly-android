@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+
+    tools:context=".MainActivity">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/propertyname"
+        android:background="#D446EC"
+        android:text="property name"
+        android:textSize="20sp"
+        android:padding="10dp"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        />
+
+    <TextView
+        android:id="@+id/price"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/propertyname"
+        android:background="@drawable/propertyofferbackground"
+        android:text="purchase price: 000"
+        android:textSize="20sp"
+        android:textColor="@color/black"
+        android:padding="10dp"
+        android:textAlignment="center"/>
+    <TextView
+        android:id="@+id/pay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/price"
+        android:background="@drawable/propertyofferbackground"
+        android:text="Rent payment profit: 00"
+        android:textSize="20sp"
+        android:textColor="@color/black"
+        android:padding="10dp"
+        android:textAlignment="center"/>
+
+    <androidx.appcompat.widget.AppCompatButton
+
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:textSize="30sp"
+        android:background="@drawable/buybtnbackground"
+        android:id="@+id/buyProperty"
+        android:layout_below="@+id/pay"
+        android:text="Buy" />
+    <androidx.appcompat.widget.AppCompatButton
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:textSize="30sp"
+        android:background="@drawable/sellbtnbackground"
+        android:id="@+id/cancel"
+        android:layout_below="@+id/buyProperty"
+
+        android:text="cancel"
+        />
+
+
+</RelativeLayout>

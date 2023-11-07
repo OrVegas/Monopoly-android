@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".avatarFragment"
+    android:background="@drawable/billsshower"
+    android:backgroundTint="#80FFFFFF"
+    android:backgroundTintMode="src_over">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16dp"
+        android:textColor="@color/black"
+        android:text="Choose the profile picture you want for your player"
+        />
+    <ImageButton
+        android:layout_width="90dp"
+        android:layout_height="90dp"
+        android:background="@drawable/lionavatar"
+        android:layout_marginTop="30dp"
+        android:layout_marginStart="10dp"
+        android:id="@+id/lionavatar"
+        />
+    <ImageButton
+        android:layout_width="90dp"
+        android:layout_height="90dp"
+        android:background="@drawable/pandaavatar"
+        android:layout_marginTop="30dp"
+        android:layout_marginStart="100dp"
+        android:id="@+id/pandaavatar"
+        />
+    <ImageButton
+        android:layout_width="90dp"
+        android:layout_height="90dp"
+        android:background="@drawable/foxavatar"
+        android:layout_marginTop="30dp"
+        android:layout_marginStart="190dp"
+        android:id="@+id/foxavatar"
+        />
+
+    <ImageButton
+        android:layout_width="90dp"
+        android:layout_height="90dp"
+        android:background="@drawable/bullavatar"
+        android:layout_marginTop="30dp"
+        android:layout_marginStart="280dp"
+        android:id="@+id/bullavatar"
+        />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Choose from gallery"
+        android:layout_marginTop="125dp"
+        android:textSize="17dp"
+        android:textColor="@color/black"
+        />
+    <ImageButton
+        android:layout_width="90dp"
+        android:layout_height="80dp"
+        android:background="@drawable/gallery"
+        android:layout_marginTop="160dp"
+        android:layout_marginStart="10dp"
+        android:id="@+id/gallery"
+        />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Take Picture"
+        android:layout_marginTop="250dp"
+        android:textSize="17dp"
+        android:textColor="@color/black"
+        />
+    <ImageButton
+        android:layout_width="90dp"
+        android:layout_height="80dp"
+        android:background="@drawable/camera"
+        android:layout_marginTop="275dp"
+        android:layout_marginStart="10dp"
+        android:id="@+id/takepic"
+        />
+
+</FrameLayout>

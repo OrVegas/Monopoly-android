@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"
+    android:background="@drawable/fireworkbackground">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/tv10"
+        android:background="@drawable/windisbackground"
+        android:text="!!You won!!"
+        android:textSize="35sp"
+        android:padding="10dp"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        />
+
+    <TextView
+        android:id="@+id/tv20"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tv10"
+        android:background="#07EA25"
+        android:text="!!!Congratulation!!!"
+        android:textSize="18sp"
+        android:textColor="@color/black"
+        android:padding="10dp"
+        android:textAlignment="center"/>
+
+    <Button
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:textSize="30sp"
+        android:backgroundTint="#07EA25"
+        android:id="@+id/ok1"
+        android:layout_below="@+id/tv20"
+        android:text="ok" />
+    <ImageView
+        android:layout_width="110dp"
+        android:layout_height="110dp"
+        android:layout_marginTop="150dp"
+        android:background="@drawable/crown"
+        android:id="@+id/crown"
+        />
+
+</RelativeLayout>
