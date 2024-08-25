@@ -36,7 +36,7 @@
         android:layout_width="match_parent"
         android:textSize="30sp"
         android:backgroundTint="#07EA25"
-        android:id="@+id/ok1"
+        android:id="@+id/finishGameWin"
         android:layout_below="@+id/tv20"
         android:text="ok" />
     <ImageView

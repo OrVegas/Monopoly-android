@@ -6,8 +6,6 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import androidx.annotation.Nullable;
-
 import java.util.ArrayList;
 public class PropertyListAdapterBot extends ArrayAdapter<Cell> {
     private LayoutInflater inflater;
@@ -31,8 +29,8 @@ public class PropertyListAdapterBot extends ArrayAdapter<Cell> {
 
         propertyName.setText(property.getName());
         propertyPrice.setText("Price: " + property.getPrice() + "✧");
-        propertyPay.setText("Rent: " + property.getPay() + "✧");
-        propertySell.setText("Sell price: " + property.getSell() + "✧");
+        propertyPay.setText("Rent: " + property.getPayment() + "✧");
+        propertySell.setText("Sell price: " + property.getSellPrice() + "✧");
 
         if(property.getColor().equals("blue")){
             propertyName.setBackgroundResource(R.color.blue);

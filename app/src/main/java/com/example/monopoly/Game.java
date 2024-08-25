@@ -8,7 +8,6 @@ import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.os.Handler;
 import android.util.Log;
-import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -49,7 +48,7 @@ import java.util.Objects;
 import java.util.Random;
 
 public class Game extends AppCompatActivity implements View.OnClickListener {
-    protected final ActivityResultHelper<Intent, ActivityResult> activityLauncher = ActivityResultHelper.registerActivityForResult(this);
+    protected final ActivityResultHelper<Intent, ActivityResult>activityLauncher = ActivityResultHelper.registerActivityForResult(this);
     AppCompatButton rolldice;
     ImageView vacation, start, surprise1, surprise2, jail, gotojail, tax1, tax2, bengurion, haneda,rothschild, greencarnaby, greenbond, greenoxford,
             blueavenue, bluebroadway, bluecrosby, redjumeirah, redmudon, redwarsan, center;
@@ -62,22 +61,41 @@ public class Game extends AppCompatActivity implements View.OnClickListener {
     TextView username;
     ImageView userpic;
     ImageView usertool, bot1tool, bot2tool;
+    ArrayList<TextView>playerCoins = new ArrayList<TextView>();
     TextView usercoins, bot1coins,bot2coins;
     ArrayList<Cell>cells=new ArrayList<>();
     private int currentPlayerTurn = 0;
-    Player user0=new Player(1);
-    Player user1=new Player(2);
-    Player user2=new Player(3);
+    int[]xCoordsUser = {1200, 1025, 845, 660, 480, 300, 10, 130, 130, 130, 130, 300, 480, 660, 840, 1020, 1200, 1200, 1200, 1200, 100};
+    int[]yCoordsUser = {795, 795, 795, 795, 795, 795, 755, 630, 450, 270, 80, 80, 80, 70, 80, 80, 80, 260, 420, 620, 755};
+    int[] xCoordsBot1 = {1120, 950, 760, 585, 400, 220, 30, 40, 40, 40, 40, 220, 400, 580, 760, 950, 1120, 1120, 1120, 1120, 100};
+    int[] yCoordsBot1 = {800, 800, 800, 800, 800, 800, 800, 630, 450, 270, 88, 88, 88, 73, 88, 88, 88, 270, 430, 630, 800};
+    int[] xCoordsBot2 = {1160, 990, 815, 630, 450, 260, 25, 90, 90, 90, 90, 260, 450, 630, 810, 990, 1170, 1170, 1170, 1170, 100};
+    int[] yCoordsBot2 = {830, 830, 830, 830, 830, 830, 850, 650, 470, 290, 115, 115, 115, 105, 115, 115, 115, 300, 460, 650, 850};
+    ArrayList<Player>players = new ArrayList<>();
+    Player user0=new Player(1, xCoordsUser, yCoordsUser);
+    Player user1=new Player(2, xCoordsBot1, yCoordsBot1);
+    Player user2=new Player(3, xCoordsBot2, yCoordsBot2);
     Dialog d, lose, win, dialog;
     TextView name, price, pay, tv1, tv2;
-    Button  ok, ok1;
+    Button finishGameLose, finishGameWin;
     AppCompatButton cancel, buy;
-    Boolean checking=true, checkDouble=false;//checking is for user that land on property to wait for him to chose if he wants to buy or not
+    Boolean offerPause =true, checkDouble=false;//offerPause is for user that land on property to wait for him to chose if he wants to buy or not
     ProgressBar progressBar;
     ImageButton userbag, bot1bag, bot2bag;
     public static final String ACTION_STOP_BACKGROUND_MUSIC = "com.example.monopoly.STOP_BACKGROUND_MUSIC";
     Animation animFirst, animSec,animSpin,animThir,animFour,animFive,animBigger;
     ImageView crown;
+    //todo: Consider adding functionality to persist game data (such as player positions, coins etc..)
+    // using SharedPreferences SQLite or a local database This way if the app is closed or crashes,
+    // the game state can be restored.
+    //todo:Loading large images or media files can impact performance. Consider using libraries like Glide or Picasso for
+    // optimized image loading and caching. Also, make sure your media files are compressed to reduce memory usage.
+    //todo:The dice roll animation logic could benefit from using Handler or Animator frameworks to
+    // provide smoother animations. This would ensure that your animations are more frame-consistent.
+    //todo: add more const to magic numbers
+    //todo:if needed separate the backend and the frontend to two classes for business module looks(if needed)
+    //todo: maybe add extra logics like hotels, 3-doubles-jail,all colored-double payment and more surprise card types
+    //todo: maybe add play against each others instead of just again bots using real-time database
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +105,9 @@ public class Game extends AppCompatActivity implements View.OnClickListener {
         readImageNameData();
         readUserData();
         readSoundApproval();
+        players.add(user0);
+        players.add(user1);
+        players.add(user2);
         vacation=(ImageView)findViewById(R.id.cell_1_1);
         redjumeirah=(ImageView)findViewById(R.id.cell_1_2);
         surprise1=(ImageView)findViewById(R.id.cell_1_3);
@@ -122,6 +143,9 @@ public class Game extends AppCompatActivity implements View.OnClickListener {
         usercoins=(TextView) findViewById(R.id.usercoins);
         bot1coins=(TextView) findViewById(R.id.bot1coins);
         bot2coins=(TextView) findViewById(R.id.bot2coins);
+        playerCoins.add(usercoins);
+        playerCoins.add(bot1coins);
+        playerCoins.add(bot2coins);
         userbag=(ImageButton)findViewById(R.id.userbag);
         bot1bag=(ImageButton)findViewById(R.id.bot1bag);
         bot2bag=(ImageButton)findViewById(R.id.bot2bag);
@@ -254,7 +278,7 @@ public class Game extends AppCompatActivity implements View.OnClickListener {
             if (mbuysound != null && sound){ mbuysound.start();}
             buyProperty(user0.getId());
         }
-        else if(v==ok){
+        else if(v== finishGameLose){
             Intent stopIntent = new Intent(ACTION_STOP_BACKGROUND_MUSIC);
             sendBroadcast(stopIntent);
             Intent intent = new Intent(this, MainActivity.class);
@@ -262,7 +286,7 @@ public class Game extends AppCompatActivity implements View.OnClickListener {
             finish();
             lose.dismiss();
         }
-        else if(v==ok1){
+        else if(v==finishGameWin){
             Intent stopIntent = new Intent(ACTION_STOP_BACKGROUND_MUSIC);
             sendBroadcast(stopIntent);
             Intent intent = new Intent(this, MainActivity.class);
@@ -326,190 +350,119 @@ public class Game extends AppCompatActivity implements View.OnClickListener {
 
     }
     private void handleDiceResult(int diceValueSum){
-        if (currentPlayerTurn == 0) {
-            user0.setPlayerCellIndex(user0.getPlayerCellIndex()+diceValueSum);
-            if(user0.getPlayerCellIndex()>=20){
-                user0.setPlayerCellIndex(user0.getPlayerCellIndex()-20);
-            }
-            cellUserSend();//move the tool on board
-            if (isPropertyCell(user0.getPlayerCellIndex())) {
-                if (cells.get(user0.getPlayerCellIndex()).getOwned()) {//pay rent for other player
-                    if(cells.get(user0.getPlayerCellIndex()).getOwnedBy()!=user0.getId()){//check if property own by himself for not paying himself
-                        if(user0.getPlayerCoins()>=cells.get(user0.getPlayerCellIndex()).getPay()){
-                            Toast.makeText(this, "you paid "+cells.get(user0.getPlayerCellIndex()).getPay()+"✧ for rent", Toast.LENGTH_SHORT).show();
-                            user0.setPlayerCoins(user0.getPlayerCoins() - cells.get(user0.getPlayerCellIndex()).getPay());
-                            updatePlayerCoins(user0.getId());
-                            payTo(cells.get(user0.getPlayerCellIndex()).getOwnedBy(), cells.get(user0.getPlayerCellIndex()).getPay());
-                            updatePlayerCoins(cells.get(user0.getPlayerCellIndex()).getOwnedBy());
-                        }
-                        else kickPlayer(user0.getId());
-                    }
-                } else {
-                    if(user0.getPlayerCoins()>=cells.get(user0.getPlayerCellIndex()).getPrice()) {
-                        checking=false;
-                        dialogOfferProperty();
-                    }
+        Player currentPlayer = players.get(currentPlayerTurn);
+        movePlayer(currentPlayer, diceValueSum);
+        handleCurrentCellAction(currentPlayer);
+        botSellPropertySafety(currentPlayer);
+        if(offerPause)switchToNextPlayerTurn();
+        else offerPause =true;//to wait for user response from offer
+    }
+    private void movePlayer(Player currentPlayer, int diceValueSum) {
+        currentPlayer.setPlayerCellIndex(currentPlayer.getPlayerCellIndex() + diceValueSum);
+        repositionPlayerOnBoard(currentPlayer.getId());
+    }
+    private void handleCurrentCellAction(Player currentPlayer){
+        if(isPropertyCell(currentPlayer.getPlayerCellIndex())){
+            handlePropertyCell(currentPlayer);
+        }//property
+        else if(currentPlayer.getPlayerCellIndex()==4||currentPlayer.getPlayerCellIndex()==17) {
+            handleTaxCell(currentPlayer);
+        }//tax
+        else if(currentPlayer.getPlayerCellIndex()==3||currentPlayer.getPlayerCellIndex()==12){
+            handleSurpriseCell((int)((Math.random()*4)+1),currentPlayer.getId());
+        }//surprise
+        else if(currentPlayer.getPlayerCellIndex()==0) {
+            handleStartCell(currentPlayer);
+        }//start
+        else if(currentPlayer.getPlayerCellIndex()==10){
+            handleVacationCell(currentPlayer);
+        }//vacation
+        else if(currentPlayer.getPlayerCellIndex()==16){
+            handleJailCell(currentPlayer);
+        }//jail
+    }
+    private void handlePropertyCell(Player currentPlayer){
+        Cell cell = cells.get(currentPlayer.getPlayerCellIndex());
+        if(cell.isOwned()){
+            if(cell.getOwnedById()!=currentPlayer.getId()){//is property owned by himself
+                if(currentPlayer.getPlayerCoins()>=cell.getPayment()){
+                    Toast.makeText(this, currentPlayer+" paid "+cell.getPayment()+"✧ for rent", Toast.LENGTH_SHORT).show();
+                    updateCoins(currentPlayer, currentPlayer.getPlayerCoins() - cell.getPayment());
+                    payTo(cell.getOwnedById(), cell.getPayment());
+                    updatePlayerCoinsDisplay(cell.getOwnedById());
                 }
-            }//property
-            else if(user0.getPlayerCellIndex()==4||user0.getPlayerCellIndex()==17) {
-                if(user0.getPlayerCoins()>=200){
-                    user0.setPlayerCoins(user0.getPlayerCoins()-200);
-                    updatePlayerCoins(user0.getId());
-                    Toast.makeText(this, "you paid 200✧ for tax", Toast.LENGTH_SHORT).show();
-                }
-                else{
-                    kickPlayer(user0.getId());
-                }
-            }//tax
-            else if(user0.getPlayerCellIndex()==3||user0.getPlayerCellIndex()==12){
-                int random= (int)((Math.random()*4)+1);
-                surpriseHandle(random,user0.getId());
-            }//surprise
-            else if(user0.getPlayerCellIndex()==0) {
-                user0.setPlayerCoins(user0.getPlayerCoins()+cells.get(user0.getPlayerCellIndex()).getPay());
-                updatePlayerCoins(user0.getId());
-            }//start
-            else if(user0.getPlayerCellIndex()==10){
-                Toast.makeText(this, "You are on vacation until the next turn", Toast.LENGTH_SHORT).show();
-                user0.setTurnSkip(user0.getId());
-            }//vacation
-            else if(user0.getPlayerCellIndex()==16){
-                Toast.makeText(this, "You are in jail for the next 2 turns", Toast.LENGTH_SHORT).show();
-                user0.setPlayerCellIndex(20);
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        cellUserSend();
-                    }
-                }, 1000);
-                user0.setTurnSkip(2);
-            }//gotojail
-        }
-        else if (currentPlayerTurn == 1) {
-            user1.setPlayerCellIndex(user1.getPlayerCellIndex()+diceValueSum);
-            if(user1.getPlayerCellIndex()>=20){
-                user1.setPlayerCellIndex(user1.getPlayerCellIndex()-20);
-            }
-            cellBot1Send();
-            if (isPropertyCell(user1.getPlayerCellIndex())) {
-                if (cells.get(user1.getPlayerCellIndex()).getOwned()) {//pay rent for other player
-                    if(cells.get(user1.getPlayerCellIndex()).getOwnedBy()!=user1.getId()) {//check if property own by himself for not paying himself
-                        if (user1.getPlayerCoins() >= cells.get(user1.getPlayerCellIndex()).getPay()) {
-                            Toast.makeText(this, "bot1 paid " + cells.get(user1.getPlayerCellIndex()).getPay() + "✧ for rent", Toast.LENGTH_SHORT).show();
-                            user1.setPlayerCoins(user1.getPlayerCoins() - cells.get(user1.getPlayerCellIndex()).getPay());
-                            updatePlayerCoins(user1.getId());
-                            payTo(cells.get(user1.getPlayerCellIndex()).getOwnedBy(), cells.get(user1.getPlayerCellIndex()).getPay());
-                            updatePlayerCoins(cells.get(user1.getPlayerCellIndex()).getOwnedBy());
-                        } else kickPlayer(user1.getId());
-                    }
-                } else {
-                    if(user1.getPlayerCoins()>200&& user1.getPlayerCoins()*0.7>cells.get(user1.getPlayerCellIndex()).getPrice()){
-                        buyProperty(user1.getId());
-                    }
-                }
-            }//property
-            else if(user1.getPlayerCellIndex()==4||user1.getPlayerCellIndex()==17) {
-                if(user1.getPlayerCoins()>=200){
-                    user1.setPlayerCoins(user1.getPlayerCoins()-200);
-                    updatePlayerCoins(user1.getId());
-                    Toast.makeText(this, "you paid 200✧ for tax", Toast.LENGTH_SHORT).show();
-                }
-                else{
-                    kickPlayer(user1.getId());
-                }
-            }//tax
-            else if(user1.getPlayerCellIndex()==3||user1.getPlayerCellIndex()==12){
-                int random= (int)((Math.random()*4)+1);
-                surpriseHandle(random,user1.getId());
-            }//surprise
-            else if(user1.getPlayerCellIndex()==0) {
-                user1.setPlayerCoins(user1.getPlayerCoins()+cells.get(user1.getPlayerCellIndex()).getPay());
-                updatePlayerCoins(user1.getId());
-            }//start
-            else if(user1.getPlayerCellIndex()==10){
-                Toast.makeText(this, "Bot1 on vacation until the next turn", Toast.LENGTH_SHORT).show();
-                user1.setTurnSkip(1);
-            }//vacation
-            else if(user1.getPlayerCellIndex()==16){
-                Toast.makeText(this, "Bot1 goes to jail for the next 2 turns", Toast.LENGTH_SHORT).show();
-                user1.setPlayerCellIndex(20);
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        cellBot1Send();
-                    }
-                }, 1000);
-                user1.setTurnSkip(2);
-            }//gotojail
-
-            if(user1.getPlayerCoins()<100&&!(user1.getOwn().isEmpty())){
-                sellBotProperty(user1.getId());
+                else kickPlayer(currentPlayer.getId());
             }
         }
-        else if (currentPlayerTurn == 2) {
-            user2.setPlayerCellIndex(user2.getPlayerCellIndex()+diceValueSum);
-            if(user2.getPlayerCellIndex()>=20){
-                user2.setPlayerCellIndex(user2.getPlayerCellIndex()-20);
-            }
-            cellBot2Send();
-            if (isPropertyCell(user2.getPlayerCellIndex())) {
-                if (cells.get(user2.getPlayerCellIndex()).getOwned()) {//pay rent for other player
-                    if(cells.get(user2.getPlayerCellIndex()).getOwnedBy()!=user2.getId()) {//check if property own by himself for not paying himself
-                        if(user2.getPlayerCoins()>=cells.get(user2.getPlayerCellIndex()).getPay()){
-                            Toast.makeText(this, "bot2 paid "+cells.get(user2.getPlayerCellIndex()).getPay()+"✧ for rent", Toast.LENGTH_SHORT).show();
-                            user2.setPlayerCoins(user2.getPlayerCoins() - cells.get(user2.getPlayerCellIndex()).getPay());
-                            updatePlayerCoins(user2.getId());
-                            payTo(cells.get(user2.getPlayerCellIndex()).getOwnedBy(), cells.get(user2.getPlayerCellIndex()).getPay());
-                            updatePlayerCoins(cells.get(user2.getPlayerCellIndex()).getOwnedBy());
-                        }
-                        else kickPlayer(user2.getId());
-                    }
-                } else {
-                    if(user2.getPlayerCoins()>200&& user2.getPlayerCoins()*0.8>cells.get(user2.getPlayerCellIndex()).getPrice()){
-                        buyProperty(user2.getId());
-                    }
-                }
-            }//property
-            else if(user2.getPlayerCellIndex()==4||user2.getPlayerCellIndex()==17) {
-                if(user2.getPlayerCoins()>=200){
-                    user2.setPlayerCoins(user2.getPlayerCoins()-200);
-                    updatePlayerCoins(user2.getId());
-                    Toast.makeText(this, "bot2 paid 200✧ for tax", Toast.LENGTH_SHORT).show();
-                }
-                else{
-                    kickPlayer(user2.getId());
-                }
-            }//tax
-            else if(user2.getPlayerCellIndex()==3||user2.getPlayerCellIndex()==12){
-                int random= (int)((Math.random()*4)+1);
-                surpriseHandle(random,user2.getId());
-            }//surprise
-            else if(user2.getPlayerCellIndex()==0) {
-                user2.setPlayerCoins(user2.getPlayerCoins()+cells.get(user2.getPlayerCellIndex()).getPay());
-                updatePlayerCoins(user2.getId());
-            }//start
-            else if(user2.getPlayerCellIndex()==10){
-                Toast.makeText(this, "Bot2 on vacation until the next turn", Toast.LENGTH_SHORT).show();
-                user2.setTurnSkip(1);
-            }//vacation
-            else if(user2.getPlayerCellIndex()==16){
-                Toast.makeText(this, "Bot2 goes to jail for the next 2 turns", Toast.LENGTH_SHORT).show();
-                user2.setPlayerCellIndex(20);
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        cellBot2Send();
-                    }
-                }, 1000);
-                user2.setTurnSkip(2);
-            }//gotojail
-
-            if(user2.getPlayerCoins()<100&&!(user2.getOwn().isEmpty())){
-                sellBotProperty(user2.getId());
-            }
+        else {
+            propertyOfferHandle(currentPlayer);
         }
-        if(checking)switchToNextPlayerTurn();
-        else checking=true;//to wait until user chose to buy property or not
+    }
+    private void handleTaxCell(Player currentPlayer){
+        if(currentPlayer.getPlayerCoins()>=200){
+            currentPlayer.setPlayerCoins(currentPlayer.getPlayerCoins()-200);
+            updatePlayerCoinsDisplay(currentPlayer.getId());
+            Toast.makeText(this, currentPlayer+" paid 200✧ for tax", Toast.LENGTH_SHORT).show();
+        }
+        else{
+            kickPlayer(currentPlayer.getId());
+        }
+    }
+    private void handleStartCell(Player currentPlayer){
+        int amount =currentPlayer.getPlayerCoins()+cells.get(currentPlayer.getPlayerCellIndex()).getPayment();
+        updateCoins(currentPlayer, amount);
+    }
+    private void handleVacationCell(Player currentPlayer){
+        Toast.makeText(this, currentPlayer+" on vacation until the next turn", Toast.LENGTH_SHORT).show();
+        currentPlayer.setTurnSkip(1);
+    }
+    private void handleJailCell(Player currentPlayer){
+        Toast.makeText(this, currentPlayer+" are in jail for the next 2 turns", Toast.LENGTH_SHORT).show();
+        currentPlayer.setPlayerCellIndexJail();
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                repositionPlayerOnBoard(currentPlayer.getId());
+            }
+        }, 700);
+        currentPlayer.setTurnSkip(2);
+    }
+    private void handleSurpriseCell(int random, int num){// check if need to kick someone
+        Player currentPlayer = players.get(num-1);
+        if(random==1){
+            Toast.makeText(this, "Surprise-"+currentPlayer+" earn 50✧", Toast.LENGTH_SHORT).show();
+            updateCoins(currentPlayer,currentPlayer.getPlayerCoins()+50);
+        }
+        else if(random==2){
+            Toast.makeText(this, "Surprise-"+currentPlayer+" lost 30✧", Toast.LENGTH_SHORT).show();
+            if(currentPlayer.getPlayerCoins()>=30){
+                updateCoins(currentPlayer,currentPlayer.getPlayerCoins()-30);
+            }
+            else kickPlayer(currentPlayer.getId());
+        }
+        else if(random==3) {
+            String surpriseDisplayText = "Surprise-"+currentPlayer+" go to Oxford but can't buy it+don't pay rent";
+            Toast.makeText(this, surpriseDisplayText, Toast.LENGTH_SHORT).show();
+            currentPlayer.setPlayerCellIndex(5);
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    repositionPlayerOnBoard(num);
+                }
+            }, 400);
+        }
+        else if(random==4){
+            Toast.makeText(this, "Surprise-"+currentPlayer+" earn 70✧", Toast.LENGTH_SHORT).show();
+            updateCoins(currentPlayer,currentPlayer.getPlayerCoins()+70);
+        }
+    }
+    private void botSellPropertySafety(Player currentPlayer){
+        if(currentPlayer.getId() == user1.getId()&&currentPlayer.getPlayerCoins()<150&&!(currentPlayer.getOwn().isEmpty())){
+            sellBotProperty(currentPlayer.getId());
+        }
+        else if(currentPlayer.getId() ==user2.getId()&&currentPlayer.getPlayerCoins()<100&&!(currentPlayer.getOwn().isEmpty())){
+            sellBotProperty(currentPlayer.getId());
+        }
     }
     private void switchToNextPlayerTurn() {
         currentPlayerTurn++;
@@ -517,13 +470,14 @@ public class Game extends AppCompatActivity implements View.OnClickListener {
             currentPlayerTurn = 0; // Reset to the first player (user)
         }
         if(checkDouble){
+            checkDouble=false;
             if(currentPlayerTurn==0)
                 currentPlayerTurn=2;
             else currentPlayerTurn--;
-            checkDouble=false;
+
         }
-        if(currentPlayerTurn==1&&!user1.isUserIn())switchToNextPlayerTurn();
-        else if(currentPlayerTurn==2&&!user2.isUserIn()) switchToNextPlayerTurn();
+        if(currentPlayerTurn==1&&!user1.getUserInGame())switchToNextPlayerTurn();
+        else if(currentPlayerTurn==2&&!user2.getUserInGame()) switchToNextPlayerTurn();
         else if(currentPlayerTurn==0 && user0.getTurnSkip()!=0) {//check if user in jail/vacation
             user0.setTurnSkip(user0.getTurnSkip()-1);
             switchToNextPlayerTurn();
@@ -539,296 +493,44 @@ public class Game extends AppCompatActivity implements View.OnClickListener {
         else if(currentPlayerTurn!=0) rollDice();//if bot
         else rolldice.setEnabled(true);
     }
-    private void cellUserSend(){
-        if(user0.getPlayerCellIndex()==0){
-            usertool.setX(1200);
-            usertool.setY(795);
-        }
-        else if(user0.getPlayerCellIndex()==1){
-            usertool.setX(1025);
-            usertool.setY(795);
-        }
-        else if(user0.getPlayerCellIndex()==2){
-            usertool.setX(845);
-            usertool.setY(795);
-        }
-        else if(user0.getPlayerCellIndex()==3){
-            usertool.setX(660);
-            usertool.setY(795);
-        }
-        else if(user0.getPlayerCellIndex()==4){
-            usertool.setX(480);
-            usertool.setY(795);
-        }
-        else if(user0.getPlayerCellIndex()==5){
-            usertool.setX(300);
-            usertool.setY(795);
-        }
-        else if(user0.getPlayerCellIndex()==6){
-            usertool.setX(10);
-            usertool.setY(755);
-        }
-        else if(user0.getPlayerCellIndex()==7){
-            usertool.setX(130);
-            usertool.setY(630);
-        }
-        else if(user0.getPlayerCellIndex()==8){
-            usertool.setX(130);
-            usertool.setY(450);
-        }
-        else if(user0.getPlayerCellIndex()==9){
-            usertool.setX(130);
-            usertool.setY(270);
-        }
-        else if(user0.getPlayerCellIndex()==10){
-            usertool.setX(130);
-            usertool.setY(80);
-        }
-        else if(user0.getPlayerCellIndex()==11){
-            usertool.setX(300);
-            usertool.setY(80);
-        }
-        else if(user0.getPlayerCellIndex()==12){
-            usertool.setX(480);
-            usertool.setY(80);
-        }
-        else if(user0.getPlayerCellIndex()==13){
-            usertool.setX(660);
-            usertool.setY(70);
-        }
-        else if(user0.getPlayerCellIndex()==14){
-            usertool.setX(840);
-            usertool.setY(80);
-        }
-        else if(user0.getPlayerCellIndex()==15){
-            usertool.setX(1020);
-            usertool.setY(80);
-        }
-        else if(user0.getPlayerCellIndex()==16){
-            usertool.setX(1200);
-            usertool.setY(80);
-        }
-        else if(user0.getPlayerCellIndex()==17){
-            usertool.setX(1200);
-            usertool.setY(260);
-        }
-        else if(user0.getPlayerCellIndex()==18){
-            usertool.setX(1200);
-            usertool.setY(420);
-        }
-        else if(user0.getPlayerCellIndex()==19){
-            usertool.setX(1200);
-            usertool.setY(620);
-        }
-        else if(user0.getPlayerCellIndex()==20){
-            usertool.setX(100);
-            usertool.setY(755);
-            user0.setPlayerCellIndex(6);
+    private void repositionPlayerOnBoard(int playerId){
+        ImageView playerTool = getPlayerTool(playerId);
+        Player currentPlayer = players.get(playerId-1);
+        playerTool.setX(currentPlayer.getXCoords(currentPlayer.getPlayerCellIndex()));
+        playerTool.setY(currentPlayer.getYCoords(currentPlayer.getPlayerCellIndex()));
+        if(currentPlayer.getPlayerCellIndex()==20){
+            currentPlayer.setPlayerCellIndex(6);
         }
     }
-    private void cellBot1Send(){
-        if(user1.getPlayerCellIndex()==0){
-            bot1tool.setX(1120);
-            bot1tool.setY(800);
+    private ImageView getPlayerTool(int playerId){
+        if(playerId == user0.getId()){
+            return usertool;
         }
-        else if(user1.getPlayerCellIndex()==1){
-            bot1tool.setX(950);
-            bot1tool.setY(800);
+        else if(playerId == user1.getId()){
+            return bot1tool;
         }
-        else if(user1.getPlayerCellIndex()==2){
-            bot1tool.setX(760);
-            bot1tool.setY(800);
+        else if(playerId == user2.getId()){
+            return bot2tool;
         }
-        else if(user1.getPlayerCellIndex()==3){
-            bot1tool.setX(585);
-            bot1tool.setY(800);
-        }
-        else if(user1.getPlayerCellIndex()==4){
-            bot1tool.setX(400);
-            bot1tool.setY(800);
-        }
-        else if(user1.getPlayerCellIndex()==5){
-            bot1tool.setX(220);
-            bot1tool.setY(800);
-        }
-        else if(user1.getPlayerCellIndex()==6){
-            bot1tool.setX(30);
-            bot1tool.setY(800);
-        }
-        else if(user1.getPlayerCellIndex()==7){
-            bot1tool.setX(40);
-            bot1tool.setY(630);
-        }
-        else if(user1.getPlayerCellIndex()==8){
-            bot1tool.setX(40);
-            bot1tool.setY(450);
-        }
-        else if(user1.getPlayerCellIndex()==9){
-            bot1tool.setX(40);
-            bot1tool.setY(270);
-        }
-        else if(user1.getPlayerCellIndex()==10){
-            bot1tool.setX(40);
-            bot1tool.setY(88);
-        }
-        else if(user1.getPlayerCellIndex()==11){
-            bot1tool.setX(220);
-            bot1tool.setY(88);
-        }
-        else if(user1.getPlayerCellIndex()==12){
-            bot1tool.setX(400);
-            bot1tool.setY(88);
-        }
-        else if(user1.getPlayerCellIndex()==13){
-            bot1tool.setX(580);
-            bot1tool.setY(73);
-        }
-        else if(user1.getPlayerCellIndex()==14){
-            bot1tool.setX(760);
-            bot1tool.setY(88);
-        }
-        else if(user1.getPlayerCellIndex()==15){
-            bot1tool.setX(950);
-            bot1tool.setY(88);
-        }
-        else if(user1.getPlayerCellIndex()==16){
-            bot1tool.setX(1120);
-            bot1tool.setY(88);
-        }
-        else if(user1.getPlayerCellIndex()==17){
-            bot1tool.setX(1120);
-            bot1tool.setY(270);
-        }
-        else if(user1.getPlayerCellIndex()==18){
-            bot1tool.setX(1120);
-            bot1tool.setY(430);
-        }
-        else if(user1.getPlayerCellIndex()==19){
-            bot1tool.setX(1120);
-            bot1tool.setY(630);
-        }
-        else if(user1.getPlayerCellIndex()==20){
-            bot1tool.setX(100);
-            bot1tool.setY(800);
-            user1.setPlayerCellIndex(6);
-        }
-    }
-    private void cellBot2Send(){
-        if(user2.getPlayerCellIndex()==0){
-            bot2tool.setX(1160);
-            bot2tool.setY(830);
-        }
-        else if(user2.getPlayerCellIndex()==1){
-            bot2tool.setX(990);
-            bot2tool.setY(830);
-        }
-        else if(user2.getPlayerCellIndex()==2){
-            bot2tool.setX(815);
-            bot2tool.setY(830);
-        }
-        else if(user2.getPlayerCellIndex()==3){
-            bot2tool.setX(630);
-            bot2tool.setY(830);
-        }
-        else if(user2.getPlayerCellIndex()==4){
-            bot2tool.setX(450);
-            bot2tool.setY(830);
-        }
-        else if(user2.getPlayerCellIndex()==5){
-            bot2tool.setX(260);
-            bot2tool.setY(830);
-        }
-        else if(user2.getPlayerCellIndex()==6){
-            bot2tool.setX(25);
-            bot2tool.setY(850);
-        }
-        else if(user2.getPlayerCellIndex()==7){
-            bot2tool.setX(90);
-            bot2tool.setY(650);
-        }
-        else if(user2.getPlayerCellIndex()==8){
-            bot2tool.setX(90);
-            bot2tool.setY(470);
-
-        }
-        else if(user2.getPlayerCellIndex()==9){
-            bot2tool.setX(90);
-            bot2tool.setY(290);
-        }
-        else if(user2.getPlayerCellIndex()==10){
-            bot2tool.setX(90);
-            bot2tool.setY(115);
-        }
-        else if(user2.getPlayerCellIndex()==11){
-            bot2tool.setX(260);
-            bot2tool.setY(115);
-        }
-        else if(user2.getPlayerCellIndex()==12){
-            bot2tool.setX(450);
-            bot2tool.setY(115);
-        }
-        else if(user2.getPlayerCellIndex()==13){
-            bot2tool.setX(630);
-            bot2tool.setY(105);
-        }
-        else if(user2.getPlayerCellIndex()==14){
-            bot2tool.setX(810);
-            bot2tool.setY(115);
-        }
-        else if(user2.getPlayerCellIndex()==15){
-            bot2tool.setX(990);
-            bot2tool.setY(115);
-        }
-        else if(user2.getPlayerCellIndex()==16){
-            bot2tool.setX(1170);
-            bot2tool.setY(115);
-        }
-        else if(user2.getPlayerCellIndex()==17){
-            bot2tool.setX(1170);
-            bot2tool.setY(300);
-        }
-        else if(user2.getPlayerCellIndex()==18){
-            bot2tool.setX(1170);
-            bot2tool.setY(460);
-        }
-        else if(user2.getPlayerCellIndex()==19){
-            bot2tool.setX(1170);
-            bot2tool.setY(650);
-        }
-        else if(user2.getPlayerCellIndex()==20){
-            bot2tool.setX(100);
-            bot2tool.setY(850);
-            user2.setPlayerCellIndex(6);
+        else{
+            Log.d("or","invalid getPlayertool function");
+            return usertool;
         }
     }
     private Boolean isPropertyCell(int num){
-        if (num==0||num==3||num==4||num==6||num==10||num==12||num==16||num==17) return false;
-        else return true;
+        return !Cell.NON_PROPERTY_CELLS.contains(num);
     }
     private void payTo(int num, int pay){
-        if(num==user0.getId()){
-            user0.setPlayerCoins(user0.getPlayerCoins()+pay);
-        }
-        else if(num==user1.getId()){
-            user1.setPlayerCoins(user1.getPlayerCoins()+pay);
-        }
-        else if(num==user2.getId()){
-            user2.setPlayerCoins(user2.getPlayerCoins()+pay);
-        }
-        else Log.d("or","error in setting owned by who property");
+        players.get(num-1).setPlayerCoins(players.get(num-1).getPlayerCoins()+pay);
     }
-    private void updatePlayerCoins(int num){
-        if(num==user0.getId()){
-            usercoins.setText("coins:"+user0.getPlayerCoins()+"✧");
-        }
-        else if(num==user1.getId()){
-            bot1coins.setText("coins:"+user1.getPlayerCoins()+"✧");
-        }
-        else if(num==user2.getId()){
-            bot2coins.setText("coins:"+user2.getPlayerCoins()+"✧");
-        }
+    private void updatePlayerCoinsDisplay(int num){
+        playerCoins.get(num-1).setText("coins:"+players.get(num-1).getPlayerCoins()+"✧");
     }
-    private void dialogOfferProperty(){
+    private void updateCoins(Player currentPlayer, int amount){
+        currentPlayer.setPlayerCoins(amount);
+        updatePlayerCoinsDisplay(currentPlayer.getId());
+    }
+    private void showPropertyOfferDialog(){
         d= new Dialog(this);
         d.setContentView(R.layout.propertycell);
         d.setTitle("Property");
@@ -840,30 +542,53 @@ public class Game extends AppCompatActivity implements View.OnClickListener {
         cancel=(AppCompatButton)d.findViewById(R.id.cancel);
         name.setText(""+cells.get(user0.getPlayerCellIndex()).getName());
         price.setText("purchase price: "+cells.get(user0.getPlayerCellIndex()).getPrice());
-        pay.setText("Rent payment profit: "+cells.get(user0.getPlayerCellIndex()).getPay());
-        if(cells.get(user0.getPlayerCellIndex()).getColor().equals("blue")){
-            name.setBackgroundResource(R.color.blue);
-        }
-        else if(cells.get(user0.getPlayerCellIndex()).getColor().equals("red")){
-            name.setBackgroundResource(R.color.red);
-        }
-        else if(cells.get(user0.getPlayerCellIndex()).getColor().equals("yellow")){
-            name.setBackgroundResource(R.color.yellow);
-        }
-        else if(cells.get(user0.getPlayerCellIndex()).getColor().equals("green")){
-            name.setBackgroundResource(R.color.green);
-        }
-        else if(cells.get(user0.getPlayerCellIndex()).getColor().equals("white")){
-            name.setBackgroundResource(R.color.grey);
-        }
+        pay.setText("Rent payment profit: "+cells.get(user0.getPlayerCellIndex()).getPayment());
+        setOfferPropertyColor();
         buy.setOnClickListener(this);
         cancel.setOnClickListener(this);
         d.show();
     }
+    private void setOfferPropertyColor(){
+        switch (cells.get(user0.getPlayerCellIndex()).getColor()) {
+            case "blue":
+                name.setBackgroundResource(R.color.blue);
+                break;
+            case "red":
+                name.setBackgroundResource(R.color.red);
+                break;
+            case "yellow":
+                name.setBackgroundResource(R.color.yellow);
+                break;
+            case "green":
+                name.setBackgroundResource(R.color.green);
+                break;
+            case "white":
+                name.setBackgroundResource(R.color.grey);
+                break;
+            default:
+                name.setBackgroundResource(R.color.grey); // Fallback color
+        }
+    }
+    private void propertyOfferHandle(Player currentPlayer){
+        if (currentPlayer.getId()==user0.getId()){
+            if (currentPlayer.getPlayerCoins()>=cells.get(currentPlayer.getPlayerCellIndex()).getPrice()){
+                offerPause =false;
+                showPropertyOfferDialog();
+            }
+        }
+        else if (currentPlayer.getId() == user1.getId()){
+            if(currentPlayer.getPlayerCoins()>200&& currentPlayer.getPlayerCoins()*0.7>cells.get(currentPlayer.getPlayerCellIndex()).getPrice())
+                buyProperty(currentPlayer.getId());
+        }
+        else if (currentPlayer.getId() == user2.getId()){
+            if(currentPlayer.getPlayerCoins()>250&& currentPlayer.getPlayerCoins()*0.8>cells.get(currentPlayer.getPlayerCellIndex()).getPrice())
+                buyProperty(currentPlayer.getId());
+        }
+    }
     private void buyProperty(int num){
         if(num==user0.getId()){
             user0.setPlayerCoins(user0.getPlayerCoins()-cells.get(user0.getPlayerCellIndex()).getPrice());
-            updatePlayerCoins(user0.getId());
+            updatePlayerCoinsDisplay(user0.getId());
             cells.get(user0.getPlayerCellIndex()).setOwned(true);
             cells.get(user0.getPlayerCellIndex()).setOwnedBy(user0.getId());
             user0.addOwn(cells.get(user0.getPlayerCellIndex()));
@@ -876,160 +601,38 @@ public class Game extends AppCompatActivity implements View.OnClickListener {
                 }
             },900);
         }
-        else if(num==user1.getId()){
-            user1.setPlayerCoins(user1.getPlayerCoins()-cells.get(user1.getPlayerCellIndex()).getPrice());
-            updatePlayerCoins(user1.getId());
-            cells.get(user1.getPlayerCellIndex()).setOwned(true);
-            cells.get(user1.getPlayerCellIndex()).setOwnedBy(user1.getId());
-            user1.addOwn(cells.get(user1.getPlayerCellIndex()));
-            Toast.makeText(this, "bot1 bought "+cells.get(user1.getPlayerCellIndex()).getName(), Toast.LENGTH_SHORT).show();
-        }
-        else if(num==user2.getId()){
-            user2.setPlayerCoins(user2.getPlayerCoins()-cells.get(user2.getPlayerCellIndex()).getPrice());
-            updatePlayerCoins(user2.getId());
-            cells.get(user2.getPlayerCellIndex()).setOwned(true);
-            cells.get(user2.getPlayerCellIndex()).setOwnedBy(user2.getId());
-            user2.addOwn(cells.get(user2.getPlayerCellIndex()));
-            Toast.makeText(this, "bot2 bought "+cells.get(user2.getPlayerCellIndex()).getName(), Toast.LENGTH_SHORT).show();
+        else if(num==user1.getId()|| num==user2.getId()){
+            Player currentPlayer = players.get(num-1);
+            currentPlayer.setPlayerCoins(currentPlayer.getPlayerCoins()-cells.get(currentPlayer.getPlayerCellIndex()).getPrice());
+            updatePlayerCoinsDisplay(currentPlayer.getId());
+            cells.get(currentPlayer.getPlayerCellIndex()).setOwned(true);
+            cells.get(currentPlayer.getPlayerCellIndex()).setOwnedBy(currentPlayer.getId());
+            currentPlayer.addOwn(cells.get(currentPlayer.getPlayerCellIndex()));
+            Toast.makeText(this, currentPlayer+" bought "+cells.get(currentPlayer.getPlayerCellIndex()).getName(), Toast.LENGTH_SHORT).show();
         }
     }
     private void sellAllProperty(int num){
-        Log.d("or", "sell all1");
-        if(num==user1.getId()){
-            ArrayList<Cell>arr=user1.getOwn();
-            for(int i=0; i<user1.getOwn().size();i++){
-                Log.d("or","ok");
-                for(int x=0; x<cells.size(); x++){
-                    if(arr.get(i).getName().equals(cells.get(x).getName())){
-                        cells.get(x).setOwned(false);
-                        cells.get(x).setOwnedBy(0);
-                        break;//after removing break second loop
-                    }
-                }
-            }
-            user1.clearOwn();
+        Player currentPlayer = players.get(num-1);
+        ArrayList<Cell>ownedCells =currentPlayer.getOwn();
+        for (Cell cell: ownedCells){
+            cell.setOwned(false);
+            cell.setOwnedBy(0);
         }
-        else if(num==user2.getId()){
-            ArrayList<Cell>arr=user2.getOwn();
-            for(int i=0; i<user2.getOwn().size();i++){
-                for(int x=0; x<cells.size(); x++){
-                    if(arr.get(i).getName().equals(cells.get(x).getName())){
-                        cells.get(x).setOwned(false);
-                        cells.get(x).setOwnedBy(0);
-                        break;//after removing break second loop
-                    }
-                }
-            }
-            user2.clearOwn();
-        }
+        currentPlayer.clearPropertyOwnership();
     }//sell all property after player lost
     private void sellBotProperty(int num){
-        if(num==2){
-            for(int i=0; i<cells.size();i++){
-                if(user1.getOwn().get(0).getName().equals(cells.get(i).getName())){
-                    cells.get(i).setOwned(false);
-                    cells.get(i).setOwnedBy(0);
-                    break;
-                }
-            }
-            Toast.makeText(this, "bot1 sold "+user1.getOwn().get(0).getName(), Toast.LENGTH_SHORT).show();
-            user1.setPlayerCoins(user1.getPlayerCoins()+user1.getOwn().get(0).getSell());
-            updatePlayerCoins(user1.getId());
-            user1.getOwn().remove(0);
-
-        }
-        else if(num==3){
-            for(int i=0; i<cells.size();i++){
-                if(user2.getOwn().get(0).getName().equals(cells.get(i).getName())){
-                    cells.get(i).setOwned(false);
-                    cells.get(i).setOwnedBy(0);
-                    break;
-                }
-            }
-            Toast.makeText(this, "bot2 sold "+user2.getOwn().get(0).getName(), Toast.LENGTH_SHORT).show();
-            user2.setPlayerCoins(user2.getPlayerCoins()+user2.getOwn().get(0).getSell());
-            updatePlayerCoins(user2.getId());
-            user2.getOwn().remove(0);
-        }
-    }
-    private void surpriseHandle(int random,int num){// check if need to kick someone
-        if(random==1){
-            if(num==1){
-                Toast.makeText(this, "Surprise-you earn 50✧", Toast.LENGTH_SHORT).show();
-                user0.setPlayerCoins(user0.getPlayerCoins()+50);
-                updatePlayerCoins(user0.getId());
-            }
-            else if(num==2){
-                Toast.makeText(this, "Surprise-bot1 earn 50✧", Toast.LENGTH_SHORT).show();
-                user1.setPlayerCoins(user1.getPlayerCoins()+50);
-                updatePlayerCoins(user1.getId());
-            }
-            else if(num==3){
-                Toast.makeText(this, "Surprise-bot2 earn 50✧", Toast.LENGTH_SHORT).show();
-                user2.setPlayerCoins(user2.getPlayerCoins()+50);
-                updatePlayerCoins(user2.getId());
+        Player currentPlayer = players.get(num-1);
+        for(int i=0; i<cells.size();i++){
+            if(currentPlayer.getOwn().get(0).getName().equals(cells.get(i).getName())){
+                cells.get(i).setOwned(false);
+                cells.get(i).setOwnedBy(0);
+                break;
             }
         }
-        else if(random==2){
-            if(num==1){
-                Toast.makeText(this, "Surprise-you lost 30✧", Toast.LENGTH_SHORT).show();
-                if(user0.getPlayerCoins()>=30){
-                    user0.setPlayerCoins(user0.getPlayerCoins()-30);
-                    updatePlayerCoins(user0.getId());
-                }
-                else kickPlayer(user0.getId());
-            }
-            else if(num==2){
-                Toast.makeText(this, "Surprise-bot1 lost 30✧", Toast.LENGTH_SHORT).show();
-                if(user1.getPlayerCoins()>=30){
-                    user1.setPlayerCoins(user1.getPlayerCoins()-30);
-                    updatePlayerCoins(user1.getId());
-                }
-                else kickPlayer(user1.getId());
-            }
-            else if(num==3){
-                Toast.makeText(this, "Surprise-bot2 lost 30✧", Toast.LENGTH_SHORT).show();
-                if(user2.getPlayerCoins()>=30){
-                    user2.setPlayerCoins(user2.getPlayerCoins()-30);
-                    updatePlayerCoins(user2.getId());
-                }
-                else kickPlayer(user2.getId());
-            }
-        }
-        else if(random==3) {
-            if(num==1){
-                Toast.makeText(this, "Surprise-go to Oxford-can't buy it+don't pay rent", Toast.LENGTH_SHORT).show();
-                user0.setPlayerCellIndex(5);
-                cellUserSend();
-            }
-            else if(num==2){
-                Toast.makeText(this, "Surprise-bot1 go to Oxford but can't buy it", Toast.LENGTH_SHORT).show();
-                user1.setPlayerCellIndex(5);
-                cellBot1Send();
-            }
-            else if(num==3){
-                Toast.makeText(this, "Surprise-bot2 go to Oxford but can't buy it", Toast.LENGTH_SHORT).show();
-                user2.setPlayerCellIndex(5);
-                cellBot2Send();
-            }
-        }
-        else if(random==4){
-            if(num==1){
-                Toast.makeText(this, "Surprise-you earn 70✧", Toast.LENGTH_SHORT).show();
-                user0.setPlayerCoins(user0.getPlayerCoins()+70);
-                updatePlayerCoins(user0.getId());
-            }
-            else if(num==2){
-                Toast.makeText(this, "Surprise-bot1 earn 70✧", Toast.LENGTH_SHORT).show();
-                user1.setPlayerCoins(user1.getPlayerCoins()+70);
-                updatePlayerCoins(user1.getId());
-            }
-            else if(num==3){
-                Toast.makeText(this, "Surprise-bot2 earn 70✧", Toast.LENGTH_SHORT).show();
-                user2.setPlayerCoins(user2.getPlayerCoins()+70);
-                updatePlayerCoins(user2.getId());
-            }
-        }
+        Toast.makeText(this, currentPlayer+" sold "+currentPlayer.getOwn().get(0).getName(), Toast.LENGTH_SHORT).show();
+        currentPlayer.setPlayerCoins(currentPlayer.getPlayerCoins()+currentPlayer.getOwn().get(0).getSellPrice());
+        updatePlayerCoinsDisplay(currentPlayer.getId());
+        currentPlayer.getOwn().remove(0);
     }
     private void kickPlayer(int num){
         if(num==user0.getId()){
@@ -1039,15 +642,16 @@ public class Game extends AppCompatActivity implements View.OnClickListener {
             lose.setCancelable(false);
             tv1=(TextView)lose.findViewById(R.id.tv1);
             tv2=(TextView)lose.findViewById(R.id.tv2);
-            ok=(Button)lose.findViewById(R.id.ok);
-            ok.setOnClickListener(this);
+            finishGameLose =(Button)lose.findViewById(R.id.finishGameLose);
+            finishGameLose.setOnClickListener(this);
             lose.show();
+            currentPlayerTurn = 2;
         }
         else if(num==user1.getId()){
             user1.setUserIn(false);
             Toast.makeText(this, "bot1 lose and left the game", Toast.LENGTH_SHORT).show();
             user1.setPlayerCoins(0);
-            updatePlayerCoins(user1.getId());
+            updatePlayerCoinsDisplay(user1.getId());
             bot1tool.setVisibility(View.INVISIBLE);
             sellAllProperty(user1.getId());
         }
@@ -1055,11 +659,11 @@ public class Game extends AppCompatActivity implements View.OnClickListener {
             user2.setUserIn(false);
             Toast.makeText(this, "bot2 lose and left the game", Toast.LENGTH_SHORT).show();
             user2.setPlayerCoins(0);
-            updatePlayerCoins(user2.getId());
+            updatePlayerCoinsDisplay(user2.getId());
             bot2tool.setVisibility(View.INVISIBLE);
             sellAllProperty(user2.getId());
         }
-        if(!user1.isUserIn()&&!user2.isUserIn()) userWin();
+        if(!user1.getUserInGame()&&!user2.getUserInGame()) userWin();
     }
     private void userWin(){
         win= new Dialog(this);
@@ -1068,28 +672,25 @@ public class Game extends AppCompatActivity implements View.OnClickListener {
         win.setCancelable(false);
         tv1=(TextView)win.findViewById(R.id.tv10);
         tv2=(TextView)win.findViewById(R.id.tv20);
-        ok1=(Button)win.findViewById(R.id.ok1);
+        finishGameWin=(Button)win.findViewById(R.id.finishGameWin);
         crown=(ImageView)win.findViewById(R.id.crown) ;
-        ok1.setOnClickListener(this);
+        finishGameWin.setOnClickListener(this);
         win.show();
         startMovingAnimation();
     }
     private void showUserPropertiesDialog(int num){
         dialog = new Dialog(this);
+        dialog.setContentView(R.layout.propertylist);
+        dialog.setTitle("Properties display");
+        dialog.setCancelable(true);
+        ListView propertyListView = dialog.findViewById(R.id.propertyListView);
+        ArrayList<Cell> userProperties = players.get(num-1).getOwn();
+        if (userProperties.isEmpty()) {
+            // Display default message when user has no properties
+            showNoPropertiesMessage();
+        }
         if(num==user0.getId()){
-            dialog.setContentView(R.layout.propertylist);
-            dialog.setTitle("Properties display");
-            dialog.setCancelable(true);
-            ListView propertyListView = dialog.findViewById(R.id.propertyListView);
-            ArrayList<Cell> userProperties = user0.getOwn();
-            if (userProperties.isEmpty()) {
-                // Display default message when user has no properties
-                TextView noPropertiesTextView = dialog.findViewById(R.id.noPropertiesTextView);
-                noPropertiesTextView.setText("Player does not own any properties");
-                noPropertiesTextView.setVisibility(View.VISIBLE);
-                propertyListView.setVisibility(View.GONE);
-            }
-            else{
+            if (!userProperties.isEmpty()){
                 PropertyListAdapter adapter = new PropertyListAdapter(this, userProperties);
                 propertyListView.setAdapter(adapter);
                 propertyListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
@@ -1102,8 +703,8 @@ public class Game extends AppCompatActivity implements View.OnClickListener {
                         adapter.remove(property);
                         adapter.notifyDataSetChanged();
                         user0.setOwn(userProperties);
-                        user0.setPlayerCoins(user0.getPlayerCoins()+property.getSell());
-                        updatePlayerCoins(user0.getId());//update user coin after selling
+                        user0.setPlayerCoins(user0.getPlayerCoins()+property.getSellPrice());
+                        updatePlayerCoinsDisplay(user0.getId());//update user coin after selling
                         for(int x=0; x<cells.size(); x++){
                             if(property.getName().equals(cells.get(x).getName())){
                                 cells.get(x).setOwned(false);
@@ -1115,43 +716,19 @@ public class Game extends AppCompatActivity implements View.OnClickListener {
                 });
             }
         }
-        else if(num==user1.getId()){
-            dialog.setContentView(R.layout.propertylist);
-            dialog.setTitle("Properties display");
-            dialog.setCancelable(true);
-            ListView propertyListView = dialog.findViewById(R.id.propertyListView);
-            ArrayList<Cell> userProperties = user1.getOwn();
-            if (userProperties.isEmpty()) {
-                // Display default message when user has no properties
-                TextView noPropertiesTextView = dialog.findViewById(R.id.noPropertiesTextView);
-                noPropertiesTextView.setText("Player does not own any properties");
-                noPropertiesTextView.setVisibility(View.VISIBLE);
-                propertyListView.setVisibility(View.GONE);
-            }
-            else{
-                PropertyListAdapterBot adapter = new PropertyListAdapterBot(this, userProperties);
-                propertyListView.setAdapter(adapter);
-            }
-        }
-        else if(num==user2.getId()){
-            dialog.setContentView(R.layout.propertylist);
-            dialog.setTitle("Properties display");
-            dialog.setCancelable(true);
-            ListView propertyListView = dialog.findViewById(R.id.propertyListView);
-            ArrayList<Cell> userProperties = user2.getOwn();
-            if (userProperties.isEmpty()) {
-                // Display default message when user has no properties
-                TextView noPropertiesTextView = dialog.findViewById(R.id.noPropertiesTextView);
-                noPropertiesTextView.setText("Player does not own any properties");
-                noPropertiesTextView.setVisibility(View.VISIBLE);
-                propertyListView.setVisibility(View.GONE);
-            }
-            else {
+        else if(num==user1.getId()|| num==user2.getId()){
+            if (!userProperties.isEmpty()){
                 PropertyListAdapterBot adapter = new PropertyListAdapterBot(this, userProperties);
                 propertyListView.setAdapter(adapter);
             }
         }
         dialog.show();
+    }
+    private void showNoPropertiesMessage(){
+        TextView noPropertiesTextView = dialog.findViewById(R.id.noPropertiesTextView);
+        noPropertiesTextView.setText("Player does not own any properties");
+        noPropertiesTextView.setVisibility(View.VISIBLE);
+        dialog.findViewById(R.id.propertyListView).setVisibility(View.GONE);
     }
     private void readUserData() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();

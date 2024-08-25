@@ -35,7 +35,7 @@
         android:layout_width="match_parent"
         android:textSize="30sp"
         android:backgroundTint="#07EA25"
-        android:id="@+id/ok"
+        android:id="@+id/finishGameLose"
         android:layout_below="@+id/tv2"
         android:text="ok" />
 
